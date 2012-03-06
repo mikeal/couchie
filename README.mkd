@@ -1,6 +1,6 @@
 # couchie
 
-### Minimalist globalStorage database API. Works well as a cache for CouchDB documents.
+### Minimalist localStorage database API. Works well as a cache for CouchDB documents.
 
 ```html
 <script type="text/javascript" src="couchie.js"></script>
