@@ -1,0 +1,33 @@
+# couchie -- Minimalist globalStorage database API. Works well as a cache for CouchDB documents.
+
+```html
+<script type="text/javascript" src="couchie.js"></script>
+<script type="text/javascript">
+  
+  // get a database by name
+  var db = couchie('name')
+  
+  // write a document, MUST include _id and _rev
+  db.post({_id:'550e8400-e29b-41d4-a716-446655440000', _rev:'1-550e8400', data:'test'}, function (e) {
+    if (e) throw e
+    
+    // get a document by id
+    db.get('550e8400-e29b-41d4-a716-446655440000', function (e, doc) {
+      if (e) throw e
+      doc // {_id:'550e8400-e29b-41d4-a716-446655440000', _rev:'1-550e8400', data:'test'}
+      doc.revs() // {'550e8400-e29b-41d4-a716-446655440000': '1-550e8400'}
+      
+      // write documents in bulk, much more efficient
+      db.bulk([ /* array of docs */ ], function (e) {
+        if (e) throw e
+        
+        // get array of all documents
+        db.all(function (e, docs) {
+          if (e) throw e
+          docs // array of all documents
+        })
+      })
+    })
+  })
+</script>
+```
