@@ -33,3 +33,9 @@
   })
 </script>
 ```
+
+### FAQ
+
+If localStorage is blocking why is this a callback API?
+
+**In the future couchie may implement a few features that require a non-blocking API. The first is `lock()` which would queue any changes coming in to the database until the lock is removed. The second is pagination across documents for large operations, basically wrapping all the synchronous file access in setTimeout calls so that we don't block the main event loop on large db operations.**
