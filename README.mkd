@@ -17,7 +17,7 @@
     db.get('550e8400-e29b-41d4-a716-446655440000', function (e, doc) {
       if (e) throw e
       doc // {_id:'550e8400-e29b-41d4-a716-446655440000', _rev:'1-550e8400', data:'test'}
-      doc.revs() // {'550e8400-e29b-41d4-a716-446655440000': '1-550e8400'}
+      db.revs() // {'550e8400-e29b-41d4-a716-446655440000': '1-550e8400'}
       
       // write documents in bulk, much more efficient
       db.bulk([ /* array of docs */ ], function (e) {
