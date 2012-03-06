@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <script src="jquery.js"></script>
+  <link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+  <script type="text/javascript" src="qunit.js"></script>
+  <script type="text/javascript" src="../couchie.js"></script>
+
+  <script>
+  $(document).ready(function(){
+    
+    var db = couchie('test')
+    
+    asyncTest("clear", function() {
+      db.clear(function () {
+        expect(0)
+        start()
+      })
+    })
+    
+    asyncTest("setFail", function () {
+      db.post({data:'asdf'}, function (e, info) {
+        ok(e)
+        start()
+      })
+    })
+    
+    asyncTest("set", function () {
+      db.post({_id:'test1', data:'asdf', _rev:'1-fake'}, function (e, info) {
+        ok(!e)
+        start()
+      })
+    })
+    
+    test("revs", function () {
+      var r = db.revs()
+      equal(r['test1'], '1-fake')
+    })
+    
+    asyncTest("get", function () {
+      db.get('test1', function (e, doc) {
+        ok(!e)
+        equal(doc._id, 'test1')
+        equal(doc._rev, '1-fake')
+        start()
+      })
+    })
+    
+    asyncTest("getnone", function () {
+      db.get('testasdfa1', function (e, doc) {
+        ok(e)
+        start()
+      })
+    })
+    
+    asyncTest("all", function () {
+      db.all(function (e, docs) {
+        ok(!e)
+        equal(docs.length, 1)
+        equal(docs[0]._id, 'test1')
+        equal(docs[0]._rev, '1-fake')
+        start()
+      })
+    })
+
+  })
+  </script>
+  
+</head>
+<body>
+  <h1 id="qunit-header">QUnit example</h1>
+ <h2 id="qunit-banner"></h2>
+ <div id="qunit-testrunner-toolbar"></div>
+ <h2 id="qunit-userAgent"></h2>
+ <ol id="qunit-tests"></ol>
+ <div id="qunit-fixture">test markup, will be hidden</div>
+</body>
+</html>
