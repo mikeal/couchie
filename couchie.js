@@ -14,6 +14,7 @@
       for (i in this.revs()) {
         localStorage.removeItem(this.n+i)
       }
+      localStorage.removeItem(this.n+'_revs')
       setTimeout(cb, 0)
     } else {
       setTimeout(cb, 0)
