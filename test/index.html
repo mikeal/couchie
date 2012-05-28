@@ -64,6 +64,31 @@
       })
     })
 
+    var db2 = couchie('test2')
+    asyncTest('multi', function() {
+      expect(11)
+      db2.post({_id:'test1', data:'not asdf', _rev:'2-fake'}, function(e, doc) {
+        ok(!e)
+
+        db.all(function(e, docs) {
+          ok(!e)
+          equal(docs.length, 1)
+          equal(docs[0]._id, 'test1')
+          equal(docs[0]._rev, '1-fake')
+          equal(docs[0].data, 'asdf')
+        })
+
+        db2.all(function(e, docs) {
+          ok(!e)
+          equal(docs.length, 1)
+          equal(docs[0]._id, 'test1')
+          equal(docs[0]._rev, '2-fake')
+          equal(docs[0].data, 'not asdf')
+        })
+      })
+
+      start()
+    })
   })
   </script>
   
