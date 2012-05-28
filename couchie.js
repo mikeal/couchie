@@ -11,7 +11,7 @@
   }
   Couchie.prototype.clear = function (cb) {
     if (localStorage[this.n+'_revs']) {
-      for (i in this.revs()) {
+      for (var i in this.revs()) {
         localStorage.removeItem(this.n+i)
       }
       localStorage.removeItem(this.n+'_revs')
