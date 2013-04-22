@@ -5,24 +5,24 @@
 ```html
 <script type="text/javascript" src="couchie.js"></script>
 <script type="text/javascript">
-  
+
   // get a database by name
   var db = couchie('name')
-  
+
   // write a document, MUST include _id and _rev
   db.post({_id:'550e8400-e29b-41d4-a716-446655440000', _rev:'1-550e8400', data:'test'}, function (e) {
     if (e) throw e
-    
+
     // get a document by id
     db.get('550e8400-e29b-41d4-a716-446655440000', function (e, doc) {
       if (e) throw e
       doc // {_id:'550e8400-e29b-41d4-a716-446655440000', _rev:'1-550e8400', data:'test'}
       db.revs() // {'550e8400-e29b-41d4-a716-446655440000': '1-550e8400'}
-      
+
       // write documents in bulk, much more efficient
       db.bulk([ /* array of docs */ ], function (e) {
         if (e) throw e
-        
+
         // get array of all documents
         db.all(function (e, docs) {
           if (e) throw e
@@ -39,3 +39,5 @@
 If localStorage is blocking why is this a callback API?
 
 **In the future couchie may implement a few features that require a non-blocking API. The first is `lock()` which would queue any changes coming in to the database until the lock is removed. The second is pagination across documents for large operations, basically wrapping all the synchronous file access in setTimeout calls so that we don't block the main event loop on large db operations.**
+
+When localStorage is not available couchie assumes the environment is node.js and will write to the filesystem. In this case the `name` of the database is a directory to write files.

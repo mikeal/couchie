@@ -18,6 +18,10 @@
     "couchdb",
     "localstorage"
   ],
+  "browser":{
+    "fs":"empty.js",
+    "path":"empty.js"
+  },
   "author": "Mikeal Rogers",
   "license": "BSD",
   "readmeFilename": "README.mkd",

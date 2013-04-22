@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
                     "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -9,35 +9,37 @@
 
   <script>
   $(document).ready(function(){
-    
+
     var db = couchie('test')
-    
+
     asyncTest("clear", function() {
       db.clear(function () {
         expect(0)
         start()
       })
     })
-    
+
     asyncTest("setFail", function () {
       db.post({data:'asdf'}, function (e, info) {
         ok(e)
         start()
       })
     })
-    
+
     asyncTest("set", function () {
       db.post({_id:'test1', data:'asdf', _rev:'1-fake'}, function (e, info) {
         ok(!e)
         start()
       })
     })
-    
-    test("revs", function () {
-      var r = db.revs()
-      equal(r['test1'], '1-fake')
+
+    asyncTest("revs", function () {
+      db.revs(function (e, r) {
+        equal(r['test1'], '1-fake')
+        start()
+      })
     })
-    
+
     asyncTest("get", function () {
       db.get('test1', function (e, doc) {
         ok(!e)
@@ -46,14 +48,14 @@
         start()
       })
     })
-    
+
     asyncTest("getnone", function () {
       db.get('testasdfa1', function (e, doc) {
         ok(e)
         start()
       })
     })
-    
+
     asyncTest("all", function () {
       db.all(function (e, docs) {
         ok(!e)
@@ -66,7 +68,7 @@
 
   })
   </script>
-  
+
 </head>
 <body>
   <h1 id="qunit-header">QUnit example</h1>
