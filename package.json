@@ -18,14 +18,26 @@
     "couchdb",
     "localstorage"
   ],
-  "browser":{
-    "fs":"empty.js",
-    "path":"empty.js",
+  "browser": {
+    "fs": "empty.js",
+    "path": "empty.js",
     "rimraf": "empty.js"
   },
-  "testling": { "files": "test.js", "browsers": [ "ie8", "ie9", "ff", "chrome", "safari" ] },
+  "testling": {
+    "files": "test.js",
+    "browsers": [
+      "ie8",
+      "ie9",
+      "ff",
+      "chrome",
+      "safari"
+    ]
+  },
   "author": "Mikeal Rogers",
   "license": "BSD",
   "readmeFilename": "README.mkd",
-  "gitHead": "a908961bf8c9d04f75300a3362de87d37d07c5f2"
+  "gitHead": "a908961bf8c9d04f75300a3362de87d37d07c5f2",
+  "devDependencies": {
+    "tape": "~0.3.3"
+  }
 }
