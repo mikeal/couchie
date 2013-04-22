@@ -20,8 +20,10 @@
   ],
   "browser":{
     "fs":"empty.js",
-    "path":"empty.js"
+    "path":"empty.js",
+    "rimraf": "empty.js"
   },
+  "testling": { "files": "test.js", "browsers": [ "ie8", "ie9", "ff", "chrome", "safari" ] },
   "author": "Mikeal Rogers",
   "license": "BSD",
   "readmeFilename": "README.mkd",

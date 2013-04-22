@@ -3,7 +3,7 @@ var fs = require('fs')
   , localStorage
   ;
 
-if (typeof window.localStorage === 'undefined') {
+if (typeof window === 'undefined' || window.localStorage === 'undefined') {
   localStorage = false
 } else {
   localStorage = window.localStorage
@@ -14,11 +14,13 @@ var uuid = function b (a) {
 }
 
 function trycatch (fn) {
+  var x
   try {
-    return fn()
+    x = fn()
   } catch(e) {
-    return e
+    x = e
   }
+  return x
 }
 
 function Couchie (name) {
@@ -27,12 +29,12 @@ function Couchie (name) {
   this.n = '_couchie__'+name+'__'
 
   if (!localStorage) {
-    var e = trycatch(function () { fs.mkdirSync(name) })
+    var e = trycatch(function () { return fs.mkdirSync(name) })
     if (e && e.errno !== 47) throw e
 
-    var f = trycatch(function () { fs.readFileSync(path.join(name, '_revs')) })
-    if (f.errno && f.errno !== 34) throw f
-    if (f.errno) fs.writeFileSync(path.join(name, '_revs'), '{}')
+    var f = trycatch(function () { return fs.readFileSync(path.join(name, '_revs')) })
+    if (f && f.errno && f.errno !== 34) throw f
+    if (f && f.errno) fs.writeFileSync(path.join(name, '_revs'), '{}')
   }
 }
 
@@ -59,11 +61,13 @@ Couchie.prototype._setItem = function (obj, id, cb) {
 }
 Couchie.prototype._removeItem = function (obj, cb) {
   var self = this
+  if (obj._id) var id = obj._id
+  else id = obj
   if (localStorage) {
-    localStorage.removeItem(this.n+obj._id)
+    localStorage.removeItem(this.n+id)
     cb(null, true)
   } else {
-    fs.unlink(path.join(this.name, obj._id), JSON.stringify(obj), function (e, i) {
+    fs.unlink(path.join(this.name, id), function (e, i) {
       if (e) return cb(e)
       cb(null, i)
     })
@@ -81,7 +85,7 @@ Couchie.prototype._getItem = function (id, cb) {
   } else {
     fs.readFile(path.join(this.name, id), function (e, buffer) {
       if (e) return cb(e)
-      cb(null, JSON.parse(buffer.toString))
+      cb(null, JSON.parse(buffer.toString()))
     })
   }
 }
@@ -96,12 +100,12 @@ Couchie.prototype._setrev = function (id, rev, cb) {
     })
   } else {
     // Use sync IO to avoid overwrites.
-    var f = trycatch(function () { fs.readFileSync(path.join(self.name, '_revs')) })
+    var f = trycatch(function () { return fs.readFileSync(path.join(self.name, '_revs')) })
     if (f.errno) return cb(e)
     var revs = JSON.parse(f.toString())
     revs[id] = rev
-    var w = trycatch(function () { fs.writeFileSync(path.join(self.name, '_revs'), JSON.stringify(revs)) })
-    if (w.errno) return cb(w)
+    var w = trycatch(function () { return fs.writeFileSync(path.join(self.name, '_revs'), JSON.stringify(revs)) })
+    if (w && w.errno) return cb(w)
     cb(null, w)
   }
 }
@@ -110,15 +114,19 @@ Couchie.prototype.clear = function (cb) {
   var self = this
   self.revs(function (e, revs) {
     if (e) return cb(e)
-    var x = 0
-    for (i in revs) {
-      x += 1
-      self._removeItem(i, function (e) {
-        if (e) return cb(e)
-        x = x - 1
-        if (x === 0) cb(null)
+    var i = 0
+      , keys = Object.keys(revs)
+      ;
+
+    if (!keys.length) return cb(null, [])
+    keys.forEach(function (id) {
+      i += 1
+      self._removeItem(id, function (e, doc) {
+        if (e && e.errno !== 34) return cb(e)
+        i = i - 1
+        if (i === 0) cb(null)
       })
-    }
+    })
   })
 }
 Couchie.prototype.post = function (obj, cb) {
@@ -165,7 +173,7 @@ Couchie.prototype.all = function (cb) {
       , results = []
       , keys = Object.keys(revs)
       ;
-    console.error(keys)
+
     if (!keys.length) return cb(null, [])
     keys.forEach(function (id) {
       i += 1

@@ -1,5 +1,9 @@
 # couchie
 
+### Tests
+
+[![browser support](https://ci.testling.com/mikeal/couchie.png)](https://ci.testling.com/mikeal/couchie)
+
 ### Minimalist localStorage database API. Works well as a cache for CouchDB documents.
 
 ```html
