@@ -28,9 +28,9 @@
     "browsers": [
       "ie8",
       "ie9",
-      "ff",
-      "chrome",
-      "safari"
+      "ff/20",
+      "chrome/26",
+      "safari/5.1"
     ]
   },
   "author": "Mikeal Rogers",
