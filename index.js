@@ -93,9 +93,7 @@ Couchie.prototype._getItem = function (id, cb) {
 Couchie.prototype._setrev = function (id, rev, cb) {
   var self = this
   if (localStorage) {
-    self.get('_revs', function (e, revs) {
-      if (e) revs = {}
-      if (!revs) revs = {}
+    self.revs(function (e, revs) {
       revs[id] = rev
       self._setItem(revs, '_revs', cb)
     })
@@ -192,7 +190,10 @@ Couchie.prototype.all = function (cb) {
 }
 
 Couchie.prototype.revs = function (cb) {
-  this._revs(cb)
+  this._revs(function (e, r) {
+    if (e) r = {}
+    cb(null, r)
+  })
 }
 
 

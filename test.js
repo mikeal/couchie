@@ -27,6 +27,7 @@ function done () {
 }
 
 db.clear(function (e) {
+  if (e) console.log('wtf')
   if (e) throw e
   ok('clear')
   db.post({data:'asdf'}, function (e, info) {
