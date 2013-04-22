@@ -4,6 +4,19 @@ var test = require('testling')
   , db = couchie('testdb')
   ;
 
+function clean () {
+  if (process && process.on) {
+    process.on('exit', function () {
+      if (rimraf.sync) {
+        rimraf.sync('testdb')
+        rimraf.sync('testdb2')
+      }
+    })
+  }
+}
+
+clean()
+
 test('clear', function (t) {
   db.clear(function (e) {
     if (e) t.fail(e)
@@ -84,9 +97,4 @@ test('multi', function (t) {
   })
 })
 
-process.on('exit', function () {
-  if (rimraf.sync) {
-    rimraf.sync('testdb')
-    rimraf.sync('testdb2')
-  }
-})
+clean()
