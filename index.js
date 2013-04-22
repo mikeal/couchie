@@ -1,5 +1,6 @@
 var fs = require('fs')
   , path = require('path')
+  , once = require('once')
   , localStorage
   ;
 
@@ -112,6 +113,7 @@ Couchie.prototype._setrev = function (id, rev, cb) {
 
 Couchie.prototype.clear = function (cb) {
   var self = this
+  cb = once(cb)
   self.revs(function (e, revs) {
     if (e) return cb(e)
     var i = 0
@@ -136,6 +138,7 @@ Couchie.prototype.post = function (obj, cb) {
 }
 Couchie.prototype.bulk = function (docs, cb) {
   var self = this
+  cb = once(cb)
   if (localStorage) {
     self.revs(function (e, revs) {
       if (e) return cb(e)
@@ -168,6 +171,7 @@ Couchie.prototype.get = function (id, cb) {
 }
 Couchie.prototype.all = function (cb) {
   var self = this
+  cb = once(cb)
   self.revs(function (e, revs) {
     var i = 0
       , results = []
@@ -178,6 +182,7 @@ Couchie.prototype.all = function (cb) {
     keys.forEach(function (id) {
       i += 1
       self.get(id, function (e, doc) {
+        if (e) return cb(e)
         results.push(doc)
         i = i - 1
         if (i === 0) cb(null, results)

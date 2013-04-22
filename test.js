@@ -1,10 +1,10 @@
-var test = require('tape')
+var test = require('testling')
   , couchie = require('./')
+  , rimraf = require('rimraf')
   , db = couchie('testdb')
   ;
 
 test('clear', function (t) {
-
   db.clear(function (e) {
     if (e) t.fail(e)
     t.end()
@@ -12,7 +12,6 @@ test('clear', function (t) {
 })
 
 test('setFail', function (t) {
-
   db.post({data:'asdf'}, function (e, info) {
     t.ok(e)
     t.end()
@@ -60,9 +59,34 @@ test("all", function (t) {
   })
 })
 
-test('clear', function (t) {
+test('multi', function (t) {
+  var db2 = couchie('testdb2')
+  db2.post({_id:'test1', data:'not asdf', _rev:'2-fake'}, function(e, doc) {
+    if (e) t.fail(e)
 
-  db.clear(function () {
-    t.end()
+    db.all(function(e, docs) {
+      if (e) t.fail(e)
+      t.equal(docs.length, 1)
+      t.equal(docs[0]._id, 'test1')
+      t.equal(docs[0]._rev, '1-fake')
+      t.equal(docs[0].data, 'asdf')
+
+      db2.all(function(e, docs) {
+        if (e) t.fail(e)
+        t.equal(docs.length, 1)
+        t.equal(docs[0]._id, 'test1')
+        t.equal(docs[0]._rev, '2-fake')
+        t.equal(docs[0].data, 'not asdf')
+        t.end()
+      })
+    })
+
   })
+})
+
+process.on('exit', function () {
+  if (rimraf.sync) {
+    rimraf.sync('testdb')
+    rimraf.sync('testdb2')
+  }
 })
