@@ -1,4 +1,4 @@
-var test = require('testling')
+var test = require('tape')
   , couchie = require('./')
   , db = couchie('testdb')
   ;
