@@ -26,8 +26,6 @@
   "testling": {
     "files": "test.js",
     "browsers": [
-      "ie8",
-      "ie9",
       "ff/20",
       "chrome/26",
       "safari/5.1"
