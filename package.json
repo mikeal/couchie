@@ -1,0 +1,25 @@
+{
+  "name": "couchie",
+  "version": "0.0.0",
+  "description": "Minimalist localStorage database API. Works well as a cache for CouchDB documents.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node tests/run.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mikeal/couchie.git"
+  },
+  "keywords": [
+    "database",
+    "couchdb",
+    "localstorage"
+  ],
+  "author": "Mikeal Rogers",
+  "license": "BSD",
+  "readmeFilename": "README.mkd",
+  "gitHead": "a908961bf8c9d04f75300a3362de87d37d07c5f2"
+}
