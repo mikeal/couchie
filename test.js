@@ -1,7 +1,7 @@
-var test = require('testling')
-  , couchie = require('./')
+var couchie = require('./')
   , rimraf = require('rimraf')
   , db = couchie('testdb')
+  , assert = require('assert')
   ;
 
 function clean () {
@@ -17,84 +17,75 @@ function clean () {
 
 clean()
 
-test('clear', function (t) {
-  db.clear(function (e) {
-    if (e) t.fail(e)
-    t.end()
-  })
-})
+var i = 0
+function ok (message) {
+  i += 1
+  console.log('ok '+i+' '+ (message || '') )
+}
+function done () {
+  console.log('1..'+i)
+}
 
-test('setFail', function (t) {
+db.clear(function (e) {
+  if (e) throw e
+  ok('clear')
   db.post({data:'asdf'}, function (e, info) {
-    t.ok(e)
-    t.end()
-  })
-})
+    assert.ok(e)
+    ok('post w/o id')
+    db.post({_id:'test1', data:'asdf', _rev:'1-fake'}, function (e, info) {
+      if (e) throw e
+      ok('post w/ id')
+      db.revs(function (e, r) {
+        if (e) throw e
+        assert.equal(r['test1'], '1-fake')
+        ok('revs')
+        db.get('test1', function (e, doc) {
+          if (e) throw e
+          assert.equal(doc._id, 'test1')
+          assert.equal(doc._rev, '1-fake')
+          ok('get')
+          db.get('testasdfa1', function (e, doc) {
+            assert.ok(e)
+            ok('getFail')
+            db.all(function (e, docs) {
+              if (e) throw e
+              assert.equal(docs.length, 1)
+              assert.equal(docs[0]._id, 'test1')
+              assert.equal(docs[0]._rev, '1-fake')
+              ok('all')
 
-test("set", function (t) {
-  db.post({_id:'test1', data:'asdf', _rev:'1-fake'}, function (e, info) {
-    if (e) t.fail(e)
-    t.end()
-  })
-})
 
-test("revs", function (t) {
-  db.revs(function (e, r) {
-    if (e) t.fail(e)
-    t.equal(r['test1'], '1-fake')
-    t.end()
-  })
-})
+              var db2 = couchie('testdb2')
+              db2.post({_id:'test1', data:'not asdf', _rev:'2-fake'}, function(e, doc) {
+                if (e) throw e
 
-test("get", function (t) {
-  db.get('test1', function (e, doc) {
-    if (e) t.fail(e)
-    t.equal(doc._id, 'test1')
-    t.equal(doc._rev, '1-fake')
-    t.end()
-  })
-})
+                db.all(function(e, docs) {
+                  if (e) throw e
+                  assert.equal(docs.length, 1)
+                  assert.equal(docs[0]._id, 'test1')
+                  assert.equal(docs[0]._rev, '1-fake')
+                  assert.equal(docs[0].data, 'asdf')
 
-test("getnone", function (t) {
-  db.get('testasdfa1', function (e, doc) {
-    t.ok(e)
-    t.end()
-  })
-})
+                  db2.all(function(e, docs) {
+                    if (e) throw e
+                    assert.equal(docs.length, 1)
+                    assert.equal(docs[0]._id, 'test1')
+                    assert.equal(docs[0]._rev, '2-fake')
+                    assert.equal(docs[0].data, 'not asdf')
+                    ok('multi')
+                    clean()
+                    done()
+                  })
 
-test("all", function (t) {
-  db.all(function (e, docs) {
-    if (e) t.fail(e)
-    t.equal(docs.length, 1)
-    t.equal(docs[0]._id, 'test1')
-    t.equal(docs[0]._rev, '1-fake')
-    t.end()
-  })
-})
+                })
 
-test('multi', function (t) {
-  var db2 = couchie('testdb2')
-  db2.post({_id:'test1', data:'not asdf', _rev:'2-fake'}, function(e, doc) {
-    if (e) t.fail(e)
-
-    db.all(function(e, docs) {
-      if (e) t.fail(e)
-      t.equal(docs.length, 1)
-      t.equal(docs[0]._id, 'test1')
-      t.equal(docs[0]._rev, '1-fake')
-      t.equal(docs[0].data, 'asdf')
-
-      db2.all(function(e, docs) {
-        if (e) t.fail(e)
-        t.equal(docs.length, 1)
-        t.equal(docs[0]._id, 'test1')
-        t.equal(docs[0]._rev, '2-fake')
-        t.equal(docs[0].data, 'not asdf')
-        t.end()
+              })
+            })
+          })
+        })
       })
     })
-
   })
 })
 
-clean()
+
