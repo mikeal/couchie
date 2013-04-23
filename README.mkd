@@ -1,5 +1,12 @@
 # couchie
 
+## Installing
+
+```
+npm install browserify
+browserify index.js > couchie.js
+```
+
 ### Tests
 
 [![browser support](https://ci.testling.com/mikeal/couchie.png)](https://ci.testling.com/mikeal/couchie)
