@@ -1,6 +1,7 @@
 var fs = require('fs')
   , path = require('path')
   , once = require('once')
+  , _ = require('underscore')
   , localStorage
   ;
 
@@ -9,80 +10,6 @@ if (typeof window === 'undefined' || window.localStorage === 'undefined') {
 } else {
   localStorage = window.localStorage
 }
-
-// From es5-shim https://raw.github.com/kriskowal/es5-shim
-if (!Object.keys) {
-  // http://whattheheadsaid.com/2010/10/a-safer-object-keys-compatibility-implementation
-  var hasDontEnumBug = true,
-    dontEnums = [
-      "toString",
-      "toLocaleString",
-      "valueOf",
-      "hasOwnProperty",
-      "isPrototypeOf",
-      "propertyIsEnumerable",
-      "constructor"
-    ],
-    dontEnumsLength = dontEnums.length;
-
-  for (var key in {"toString": null}) {
-    hasDontEnumBug = false;
-  }
-
-  Object.keys = function keys(object) {
-
-    if (
-      (typeof object != "object" && typeof object != "function") ||
-      object === null
-    ) {
-      throw new TypeError("Object.keys called on a non-object");
-    }
-
-    var keys = [];
-    for (var name in object) {
-      if (owns(object, name)) {
-        keys.push(name);
-      }
-    }
-
-    if (hasDontEnumBug) {
-      for (var i = 0, ii = dontEnumsLength; i < ii; i++) {
-        var dontEnum = dontEnums[i];
-        if (owns(object, dontEnum)) {
-          keys.push(dontEnum);
-        }
-      }
-    }
-    return keys;
-  };
-}
-if (!Array.prototype.forEach) {
-  Array.prototype.forEach = function forEach(fun /*, thisp*/) {
-    var object = toObject(this),
-      self = splitString && _toString(this) == "[object String]" ?
-        this.split("") :
-        object,
-      thisp = arguments[1],
-      i = -1,
-      length = self.length >>> 0;
-
-    // If no callback function or if callback is not a callable function
-    if (_toString(fun) != "[object Function]") {
-      throw new TypeError(); // TODO message
-    }
-
-    while (++i < length) {
-      if (i in self) {
-        // Invoke the callback function with call, passing arguments:
-        // context, property value, property key, thisArg object
-        // context
-        fun.call(thisp, self[i], i, object);
-      }
-    }
-  };
-}
-// end es5-shim
-
 
 function trycatch (fn) {
   var x
@@ -185,11 +112,11 @@ Couchie.prototype.clear = function (cb) {
   self.revs(function (e, revs) {
     if (e) return cb(e)
     var i = 0
-      , keys = Object.keys(revs)
+      , keys = _.keys(revs)
       ;
 
     if (!keys.length) return cb(null, [])
-    keys.forEach(function (id) {
+    _.each(keys, function (id) {
       i += 1
       self._removeItem(id, function (e, doc) {
         if (e && e.errno !== 34) return cb(e)
@@ -221,7 +148,7 @@ Couchie.prototype.bulk = function (docs, cb) {
     })
   } else {
     var i = 0
-    docs.forEach(function (d) {
+    _.each(docs, function (d) {
       i += 1
       var results = []
       self.post(d, function (e, info) {
@@ -243,11 +170,11 @@ Couchie.prototype.all = function (cb) {
   self.revs(function (e, revs) {
     var i = 0
       , results = []
-      , keys = Object.keys(revs)
+      , keys = _.keys(revs)
       ;
 
     if (!keys.length) return cb(null, [])
-    keys.forEach(function (id) {
+    _.each(keys, function (id) {
       i += 1
       self.get(id, function (e, doc) {
         if (e) return cb(e)
