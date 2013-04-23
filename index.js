@@ -10,9 +10,79 @@ if (typeof window === 'undefined' || window.localStorage === 'undefined') {
   localStorage = window.localStorage
 }
 
-var uuid = function b (a) {
-  return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,b)
+// From es5-shim https://raw.github.com/kriskowal/es5-shim
+if (!Object.keys) {
+  // http://whattheheadsaid.com/2010/10/a-safer-object-keys-compatibility-implementation
+  var hasDontEnumBug = true,
+    dontEnums = [
+      "toString",
+      "toLocaleString",
+      "valueOf",
+      "hasOwnProperty",
+      "isPrototypeOf",
+      "propertyIsEnumerable",
+      "constructor"
+    ],
+    dontEnumsLength = dontEnums.length;
+
+  for (var key in {"toString": null}) {
+    hasDontEnumBug = false;
+  }
+
+  Object.keys = function keys(object) {
+
+    if (
+      (typeof object != "object" && typeof object != "function") ||
+      object === null
+    ) {
+      throw new TypeError("Object.keys called on a non-object");
+    }
+
+    var keys = [];
+    for (var name in object) {
+      if (owns(object, name)) {
+        keys.push(name);
+      }
+    }
+
+    if (hasDontEnumBug) {
+      for (var i = 0, ii = dontEnumsLength; i < ii; i++) {
+        var dontEnum = dontEnums[i];
+        if (owns(object, dontEnum)) {
+          keys.push(dontEnum);
+        }
+      }
+    }
+    return keys;
+  };
 }
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function forEach(fun /*, thisp*/) {
+    var object = toObject(this),
+      self = splitString && _toString(this) == "[object String]" ?
+        this.split("") :
+        object,
+      thisp = arguments[1],
+      i = -1,
+      length = self.length >>> 0;
+
+    // If no callback function or if callback is not a callable function
+    if (_toString(fun) != "[object Function]") {
+      throw new TypeError(); // TODO message
+    }
+
+    while (++i < length) {
+      if (i in self) {
+        // Invoke the callback function with call, passing arguments:
+        // context, property value, property key, thisArg object
+        // context
+        fun.call(thisp, self[i], i, object);
+      }
+    }
+  };
+}
+// end es5-shim
+
 
 function trycatch (fn) {
   var x
