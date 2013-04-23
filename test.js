@@ -2,6 +2,7 @@ var couchie = require('./')
   , rimraf = require('rimraf')
   , db = couchie('testdb')
   , assert = require('assert')
+  , ok = require('okdone')
   ;
 
 function clean () {
@@ -16,15 +17,6 @@ function clean () {
 }
 
 clean()
-
-var i = 0
-function ok (message) {
-  i += 1
-  console.log('ok '+i+' '+ (message || '') )
-}
-function done () {
-  console.log('1..'+i)
-}
 
 db.clear(function (e) {
   if (e) console.log('wtf')
@@ -75,7 +67,7 @@ db.clear(function (e) {
                     assert.equal(docs[0].data, 'not asdf')
                     ok('multi')
                     clean()
-                    done()
+                    ok.done()
                   })
 
                 })
