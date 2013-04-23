@@ -1,6 +1,6 @@
 {
   "name": "couchie",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Minimalist localStorage database API. Works well as a cache for CouchDB documents.",
   "main": "index.js",
   "directories": {
