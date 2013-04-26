@@ -18,11 +18,6 @@
     "couchdb",
     "localstorage"
   ],
-  "browser": {
-    "fs": "empty.js",
-    "path": "empty.js",
-    "rimraf": "empty.js"
-  },
   "testling": {
     "files": "test.js",
     "browsers": [

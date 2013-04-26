@@ -1,39 +1,46 @@
-var fs = require('fs')
-  , path = require('path')
-  , once = require('once')
+var once = require('once')
   , _ = require('underscore')
   , localStorage
+  , setImmediate
   ;
 
-if (typeof window === 'undefined' || window.localStorage === 'undefined') {
-  localStorage = false
-} else {
-  localStorage = window.localStorage
+function keys () {
+  if (localStorage._db) return _.keys(localStorage._db)
+  return _.keys(localStorage)
 }
 
-function trycatch (fn) {
-  var x
-  try {
-    x = fn()
-  } catch(e) {
-    x = e
+if (typeof setImmediate === 'undefined') {
+  setImmediate = function (cb) {return setTimeout(cb, 0)}
+} else {
+  setImmediate = setImmediate
+}
+
+function defer () {
+  var args = Array.prototype.slice.call(arguments)
+  setImmediate(function () {
+    args[0].apply(args[0], args.slice(1))
+  })
+}
+
+if (typeof window === 'undefined' || window.localStorage === 'undefined') {
+  localStorage = {_db:{}}
+  localStorage.setItem = function (id, value) {
+    localStorage._db[id] = value
   }
-  return x
+  localStorage.getItem = function (id) {
+    return localStorage._db[id]
+  }
+  localStorage.removeItem = function (id) {
+    delete localStorage._db[id]
+  }
+} else {
+  localStorage = window.localStorage
 }
 
 function Couchie (name) {
   if (name.indexOf('__') !== -1) throw new Error('Cannot have double underscores in name')
   this.name = name
   this.n = '_couchie__'+name+'__'
-
-  if (!localStorage) {
-    var e = trycatch(function () { return fs.mkdirSync(name) })
-    if (e && e.errno !== 47) throw e
-
-    var f = trycatch(function () { return fs.readFileSync(path.join(name, '_revs')) })
-    if (f && f.errno && f.errno !== 34) throw f
-    if (f && f.errno) fs.writeFileSync(path.join(name, '_revs'), '{}')
-  }
 }
 
 Couchie.prototype._setItem = function (obj, id, cb) {
@@ -45,154 +52,97 @@ Couchie.prototype._setItem = function (obj, id, cb) {
     cb = function () {}
   }
   var self = this
-  if (localStorage) {
-    localStorage.setItem(this.n+id, JSON.stringify(obj))
-    if (id !== '_revs') self._setrev(obj._id, obj._rev, cb)
-    else cb(null)
-  } else {
-    fs.writeFile(path.join(this.name, id), JSON.stringify(obj), function (e, i) {
-      if (e) return cb(e)
-      if (id !== '_revs') self._setrev(obj._id, obj._rev, cb)
-      else cb(null)
-    })
-  }
+
+  localStorage.setItem(this.n+id, JSON.stringify(obj))
+  defer(cb, null)
 }
-Couchie.prototype._removeItem = function (obj, cb) {
+Couchie.prototype.delete = function (obj, cb) {
   var self = this
   if (obj._id) var id = obj._id
   else id = obj
-  if (localStorage) {
-    localStorage.removeItem(this.n+id)
-    cb(null, true)
-  } else {
-    fs.unlink(path.join(this.name, id), function (e, i) {
-      if (e) return cb(e)
-      cb(null, i)
-    })
-  }
-}
 
-Couchie.prototype._revs = function (cb) {
-  this._getItem('_revs', cb)
-}
-Couchie.prototype._getItem = function (id, cb) {
-  if (localStorage) {
-    var doc = localStorage.getItem(this.n+id)
-    if (!doc) return cb(new Error('No such doc.'))
-    cb(null, JSON.parse(doc))
-  } else {
-    fs.readFile(path.join(this.name, id), function (e, buffer) {
-      if (e) return cb(e)
-      cb(null, JSON.parse(buffer.toString()))
-    })
-  }
-}
-Couchie.prototype._setrev = function (id, rev, cb) {
-  var self = this
-  if (localStorage) {
-    self.revs(function (e, revs) {
-      revs[id] = rev
-      self._setItem(revs, '_revs', cb)
-    })
-  } else {
-    // Use sync IO to avoid overwrites.
-    var f = trycatch(function () { return fs.readFileSync(path.join(self.name, '_revs')) })
-    if (f.errno) return cb(e)
-    var revs = JSON.parse(f.toString())
-    revs[id] = rev
-    var w = trycatch(function () { return fs.writeFileSync(path.join(self.name, '_revs'), JSON.stringify(revs)) })
-    if (w && w.errno) return cb(w)
-    cb(null, w)
-  }
+  localStorage.removeItem(this.n+id)
+  defer(cb, null, true)
 }
 
 Couchie.prototype.clear = function (cb) {
   var self = this
   cb = once(cb)
-  self.revs(function (e, revs) {
-    if (e) return cb(e)
-    var i = 0
-      , keys = _.keys(revs)
-      ;
 
-    if (!keys.length) return cb(null, [])
-    _.each(keys, function (id) {
-      i += 1
-      self._removeItem(id, function (e, doc) {
-        if (e && e.errno !== 34) return cb(e)
-        i = i - 1
-        if (i === 0) cb(null)
-      })
+  var i = 0
+  function _del (id) {
+    i += 1
+    self.delete(id, function (e, d) {
+      if (e) return defer(cb, e)
+      i = i - 1
+      if (i === 0) defer(cb, null, true)
     })
-  })
+  }
+
+  var _keys = self.keys()
+  if (!_keys.length) return defer(cb, null, [])
+  _.each(_keys, _del)
 }
 Couchie.prototype.post = function (obj, cb) {
-  if (!obj._id || !obj._rev) return cb(new Error('Document does not have _id or _rev.'))
-  if (obj._id[0] === '_') return cb(new Error('Cannot set documents ids that begin in _'))
+  if (!obj._id || !obj._rev) return defer(cb, new Error('Document does not have _id or _rev.'))
+  if (obj._id[0] === '_') return defer(cb, new Error('Cannot set documents ids that begin in _'))
   this._setItem(obj, cb)
 }
 Couchie.prototype.bulk = function (docs, cb) {
   var self = this
   cb = once(cb)
-  if (localStorage) {
-    self.revs(function (e, revs) {
-      if (e) return cb(e)
-      for (var i=0;i<docs.length;i++) {
-        var obj = docs[i]
-        if (!obj._id || !obj._rev) return cb(new Error('Document does not have _id or _rev.'))
-        localStorage.setItem(this.n+obj._id, JSON.stringify(obj))
-        revs[obj._id] = obj._rev
-      }
-      this._setItem('_revs', revs)
-      cb(null)
+
+  var i = 0
+  function write (obj) {
+    i++
+    self.post(obj, function (e, i) {
+      if (e) return defer(cb, e)
+      i = i - 1
+      if (i === 0) defer(cb, null, i)
     })
-  } else {
-    var i = 0
-    _.each(docs, function (d) {
-      i += 1
-      var results = []
-      self.post(d, function (e, info) {
-        if (e) return cb(e)
-        i = i - 1
-        results.push(info)
-        if (i === 0) cb(null, results)
-      })
-    })
-    if (!docs.length) cb(null, [])
   }
+
+  if (docs.length) return defer(cb, null, [])
+  _.each(docs, write)
 }
 Couchie.prototype.get = function (id, cb) {
-  this._getItem(id, cb)
+  var doc = localStorage.getItem(this.n+id)
+  if (!doc) return defer(cb, new Error('No such doc.'))
+  defer(cb, null, JSON.parse(doc))
+}
+Couchie.prototype.keys = function () {
+  var self = this
+  return _.map(_.filter(keys(), function (k) {return k.slice(0, self.n.length) === self.n}), function (k) {return k.slice(self.n.length)})
 }
 Couchie.prototype.all = function (cb) {
   var self = this
   cb = once(cb)
-  self.revs(function (e, revs) {
-    var i = 0
-      , results = []
-      , keys = _.keys(revs)
-      ;
 
-    if (!keys.length) return cb(null, [])
-    _.each(keys, function (id) {
-      i += 1
-      self.get(id, function (e, doc) {
-        if (e) return cb(e)
-        results.push(doc)
-        i = i - 1
-        if (i === 0) cb(null, results)
-      })
+  var results = []
+  var i = 0
+  function _get (id) {
+    i++
+    self.get(id, function (e, d) {
+      if (e) return defer(cb, e)
+      i = i - 1
+      results.push(d)
+      if (i === 0) defer(cb, null, results)
     })
-  })
-}
+  }
 
+  var _keys = self.keys()
+  if (!_keys.length) return defer(cb, null, [])
+  _.each(_keys, _get)
+}
 Couchie.prototype.revs = function (cb) {
-  this._revs(function (e, r) {
-    if (e) r = {}
-    cb(null, r)
+  var self = this
+  cb = once(cb)
+
+  self.all(function (e, all) {
+    if (e) return defer(cb, e)
+    defer(cb, null, _.object(_.pluck(all, '_id'), _.pluck(all, '_rev')))
   })
 }
-
 
 module.exports = function (name) { return new Couchie(name) }
 

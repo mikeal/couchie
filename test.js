@@ -1,22 +1,8 @@
 var couchie = require('./')
-  , rimraf = require('rimraf')
   , db = couchie('testdb')
   , assert = require('assert')
   , ok = require('okdone')
   ;
-
-function clean () {
-  if (process && process.on) {
-    process.on('exit', function () {
-      if (rimraf.sync) {
-        rimraf.sync('testdb')
-        rimraf.sync('testdb2')
-      }
-    })
-  }
-}
-
-clean()
 
 db.clear(function (e) {
   if (e) console.log('wtf')
@@ -66,7 +52,6 @@ db.clear(function (e) {
                     assert.equal(docs[0]._rev, '2-fake')
                     assert.equal(docs[0].data, 'not asdf')
                     ok('multi')
-                    clean()
                     ok.done()
                   })
 
