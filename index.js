@@ -1,5 +1,6 @@
 var once = require('once')
-  , _ = require('underscore')
+  , _ = require('lodash')
+  , events = require('events')
   , localStorage
   , setImmediate
   ;
@@ -116,23 +117,32 @@ Couchie.prototype.keys = function () {
 }
 Couchie.prototype.all = function (cb) {
   var self = this
-  cb = once(cb)
+  cb = once(cb || function () {})
 
-  var results = []
+  var ee = new events.EventEmitter()
+    , results = []
+    ;
+  ee.on('doc', results.push.bind(results))
+  ee.on('end', function () {
+    defer(cb, null, results)
+  })
+  ee.on('error', cb)
+
   var i = 0
   function _get (id) {
     i++
     self.get(id, function (e, d) {
-      if (e) return defer(cb, e)
+      if (e) return ee.emit('error')
       i = i - 1
-      results.push(d)
-      if (i === 0) defer(cb, null, results)
+      ee.emit('doc', d)
+      if (i === 0) ee.emit('end')
     })
   }
 
   var _keys = self.keys()
-  if (!_keys.length) return defer(cb, null, [])
   _.each(_keys, _get)
+  if (!_keys.length) defer(function (){ ee.emit('end') })
+  return ee
 }
 Couchie.prototype.revs = function (cb) {
   var self = this

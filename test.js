@@ -52,7 +52,15 @@ db.clear(function (e) {
                     assert.equal(docs[0]._rev, '2-fake')
                     assert.equal(docs[0].data, 'not asdf')
                     ok('multi')
-                    ok.done()
+
+                    var i = 0
+                    var x = db.all()
+                    x.on('doc', function () {i += 1})
+                    x.on('end', function () {
+                      ok('all emitter')
+                      ok.done()
+                    })
+
                   })
 
                 })
