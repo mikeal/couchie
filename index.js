@@ -5,9 +5,9 @@ var once = require('once')
   , setImmediate
   ;
 
-function keys () {
-  if (localStorage._db) return _.keys(localStorage._db)
-  return _.keys(localStorage)
+function keys (obj) {
+  if (obj._db) return _.keys(obj._db)
+  return _.keys(obj)
 }
 
 if (typeof setImmediate === 'undefined') {
@@ -44,7 +44,7 @@ function Couchie (name, store) {
   if (name.indexOf('__') !== -1) throw new Error('Cannot have double underscores in name')
   this.name = name
   this.n = '_couchie__'+name+'__'
-  this.localStorage = store || localStorage
+  this.store = store || localStorage
 }
 
 Couchie.prototype._setItem = function (obj, id, cb) {
@@ -57,7 +57,7 @@ Couchie.prototype._setItem = function (obj, id, cb) {
   }
   var self = this
 
-  this.localStorage.setItem(this.n+id, JSON.stringify(obj))
+  this.store.setItem(this.n+id, JSON.stringify(obj))
   defer(cb, null)
 }
 Couchie.prototype.delete = function (obj, cb) {
@@ -65,7 +65,7 @@ Couchie.prototype.delete = function (obj, cb) {
   if (obj._id) var id = obj._id
   else id = obj
 
-  this.localStorage.removeItem(this.n+id)
+  this.store.removeItem(this.n+id)
   defer(cb, null, true)
 }
 
@@ -110,13 +110,13 @@ Couchie.prototype.bulk = function (docs, cb) {
   _.each(docs, write)
 }
 Couchie.prototype.get = function (id, cb) {
-  var doc = this.localStorage.getItem(this.n+id)
+  var doc = this.store.getItem(this.n+id)
   if (!doc) return defer(cb, new Error('No such doc.'))
   defer(cb, null, JSON.parse(doc))
 }
 Couchie.prototype.keys = function () {
   var self = this
-  return _.map(_.filter(keys(), function (k) {return k.slice(0, self.n.length) === self.n}), function (k) {return k.slice(self.n.length)})
+  return _.map(_.filter(keys(this.store), function (k) {return k.slice(0, self.n.length) === self.n}), function (k) {return k.slice(self.n.length)})
 }
 Couchie.prototype.all = function (cb) {
   var self = this
@@ -157,7 +157,7 @@ Couchie.prototype.revs = function (cb) {
   })
 }
 
-module.exports = function (name) { return new Couchie(name) }
+module.exports = function (name, store) { return new Couchie(name, store) }
 
 if (typeof window !== 'undefined') window.couchie = module.exports
 
