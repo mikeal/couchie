@@ -23,25 +23,28 @@ function defer () {
   })
 }
 
+var memoryStore  = {_db:{}}
+memoryStore.setItem = function (id, value) {
+  memoryStore._db[id] = value
+}
+memoryStore.getItem = function (id) {
+  return memoryStore._db[id]
+}
+memoryStore.removeItem = function (id) {
+  delete memoryStore_db[id]
+}
+
 if (typeof window === 'undefined' || window.localStorage === 'undefined') {
-  localStorage = {_db:{}}
-  localStorage.setItem = function (id, value) {
-    localStorage._db[id] = value
-  }
-  localStorage.getItem = function (id) {
-    return localStorage._db[id]
-  }
-  localStorage.removeItem = function (id) {
-    delete localStorage._db[id]
-  }
+  localStorage = memoryStore
 } else {
   localStorage = window.localStorage
 }
 
-function Couchie (name) {
+function Couchie (name, store) {
   if (name.indexOf('__') !== -1) throw new Error('Cannot have double underscores in name')
   this.name = name
   this.n = '_couchie__'+name+'__'
+  this.localStorage = store || localStorage
 }
 
 Couchie.prototype._setItem = function (obj, id, cb) {
@@ -54,7 +57,7 @@ Couchie.prototype._setItem = function (obj, id, cb) {
   }
   var self = this
 
-  localStorage.setItem(this.n+id, JSON.stringify(obj))
+  this.localStorage.setItem(this.n+id, JSON.stringify(obj))
   defer(cb, null)
 }
 Couchie.prototype.delete = function (obj, cb) {
@@ -62,7 +65,7 @@ Couchie.prototype.delete = function (obj, cb) {
   if (obj._id) var id = obj._id
   else id = obj
 
-  localStorage.removeItem(this.n+id)
+  this.localStorage.removeItem(this.n+id)
   defer(cb, null, true)
 }
 
@@ -107,7 +110,7 @@ Couchie.prototype.bulk = function (docs, cb) {
   _.each(docs, write)
 }
 Couchie.prototype.get = function (id, cb) {
-  var doc = localStorage.getItem(this.n+id)
+  var doc = this.localStorage.getItem(this.n+id)
   if (!doc) return defer(cb, new Error('No such doc.'))
   defer(cb, null, JSON.parse(doc))
 }
