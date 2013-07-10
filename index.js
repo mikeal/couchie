@@ -160,3 +160,5 @@ Couchie.prototype.revs = function (cb) {
 module.exports = function (name) { return new Couchie(name) }
 
 if (typeof window !== 'undefined') window.couchie = module.exports
+
+module.exports.memoryStore = memoryStore
