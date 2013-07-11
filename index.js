@@ -31,7 +31,7 @@ memoryStore.getItem = function (id) {
   return memoryStore._db[id]
 }
 memoryStore.removeItem = function (id) {
-  delete memoryStore_db[id]
+  delete memoryStore._db[id]
 }
 
 if (typeof window === 'undefined' || window.localStorage === 'undefined') {
