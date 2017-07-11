@@ -61,10 +61,10 @@
   "readmeFilename": "README.mkd",
   "gitHead": "a908961bf8c9d04f75300a3362de87d37d07c5f2",
   "dependencies": {
-    "once": "~1.1.1",
-    "lodash": "~1.2.1"
+    "once": "~1.4.0",
+    "lodash": "~4.17.4"
   },
   "devDependencies": {
-    "okdone": "~0.1.0"
+    "okdone": "~0.3.0"
   }
 }
